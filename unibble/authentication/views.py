@@ -33,7 +33,7 @@ def kakao_login(request):
                 email = kakao_account['kakao_account']['email']
             )
             user.save()
-            unibber = Unibber.objects.create(user=user)
+            unibber = Unibber.objects.create(user=user, sns_link="kakao")
             unibber.save()
             token = Token.objects.create(user=user)
             return JsonResponse({'authToken': token.key, "status": 200},status=200)
@@ -51,7 +51,7 @@ def signup(request):
         return JsonResponse({"msg" : "already has account"})
     pw1 = request.body["pw1"]
     pw2 = request.body["pw2"]
-    nick_name = request.body["nick_name"]
+    nick_name = request.body["nickname"]
     if Unibber.objects.get(nick_name = nick_name).exists():
         return JsonResponse({"msg" : "duplicate nickname"})
     phone_num = request.body["phone_num"]
@@ -97,7 +97,7 @@ def password_validation(request):
 
 
 def check_dup_nick(request):
-    nick_name = request.body["nick_name"]
+    nick_name = request.body["nickname"]
     if Unibber.objects.get(nick_name = nick_name).exits():
         return JsonResponse({"dupNick" : True })
     else:
