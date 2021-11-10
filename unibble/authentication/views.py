@@ -35,23 +35,18 @@ def kakao_login(request):
             unibber = Unibber.objects.create(user=user)
             unibber.save()
             token = Token.objects.create(user=user)
-            json_response = json.dumps({'auth_token': token})
-            return JsonResponse(json_response, status=201)
+            return JsonResponse({'auth_token': token.key, "status": 200},status=200)
         user = User.objects.get(email = kakao_account['kakao_account']['email'])
         token = Token.objects.get(user=user)
-        json_response = json.dumps({'auth_token': token})
-        return JsonResponse(json_response, status=200)
+        return JsonResponse({'auth_token': token.key, "status" : 200},status=200)
     except KeyError:
             return JsonResponse({'message': 'KEY_ERROR'}, status=400)
     except ConnectionError:
         return JsonResponse({'message': 'CONNECTION_ERROR'}, status=400)
 
-api_view(
-    [
-        "POST"
-    ]
-)
 def signup(request):
     email = request.data["email"]
     pw = request.data["pw1"]
-    pw = request.data["pw2"]
+    pw2 = request.data["pw2"]
+    
+
