@@ -5,7 +5,6 @@ from django.http.response import JsonResponse
 from django.shortcuts import render
 from django.contrib.auth.password_validation import UserAttributeSimilarityValidator, MinimumLengthValidator,CommonPasswordValidator,NumericPasswordValidator
 from django.contrib.auth import login
-from rest_framework.decorators import api_view
 import requests
 from user.models import Unibber,User
 from rest_framework.authtoken.models import Token
