@@ -67,6 +67,14 @@ class Unibber(models.Model):
     phone_num = models.TextField(max_length=11)
     student_type = models.CharField(max_length=4, default="stdn", choices=STUDENT_TYPE)
     sns_link = models.TextField(max_length=20,default="연동 없음")
+    
+    def __str__(self) -> str:
+        str_name = ''
+        if self.nick_name:
+            str_name = self.nick_name
+        else:
+            str_name = self.user.email
+        return str_name
 class University(models.Model):
     name = models.TextField(max_length=50)
     unibber = models.OneToOneField(Unibber, on_delete = models.CASCADE,null=True)
