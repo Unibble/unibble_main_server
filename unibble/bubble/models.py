@@ -8,11 +8,11 @@ class Bubble(models.Model):
         ("confirmed","확정됨"),
         ("expired","만료됨"),
     ]
-    CATEGORY = [
+    UNIT = [
         (0,"밥"),
         (1,"술"),
         (2,"미팅"),
-        (3,"카페공부"),
+        (3,"스터디"),
         (4,"영화"),
         (5,"운동"),
         (6,"산책"),
@@ -20,11 +20,13 @@ class Bubble(models.Model):
     ]
     type = models.CharField(max_length=10, default="live", choices=BUBBLE_TYPE)
     created = models.DateTimeField(auto_now=timezone.now)
+    time2meet = models.DateTimeField()
     deadline = models.DateTimeField()
     host = models.ForeignKey(Unibber, on_delete=models.CASCADE)
+    guest_num = models.PositiveSmallIntegerField() 
     title = models.TextField(max_length=50)
     content = models.TextField(max_length=500,null=True, blank=True)
-    category = models.PositiveSmallIntegerField(blank=True, choices=BUBBLE_TYPE)
+    unit = models.PositiveSmallIntegerField(blank=True, choices=UNIT)
     lat = models.FloatField(null=True, blank=True)
     lon = models.FloatField(null=True, blank=True)
     is_deleted = models.BooleanField(default=False)
