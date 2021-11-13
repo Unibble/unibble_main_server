@@ -5,7 +5,7 @@ from django.http.response import JsonResponse
 from django.shortcuts import render
 from django.contrib.auth.password_validation import UserAttributeSimilarityValidator, MinimumLengthValidator,CommonPasswordValidator,NumericPasswordValidator
 from django.contrib.auth import login
-from rest_framework.decorators import api_view
+from django.contrib.auth.decorators import login_required
 import requests
 from user.models import Unibber,User
 from rest_framework.authtoken.models import Token
@@ -45,6 +45,28 @@ def kakao_login(request):
     except ConnectionError:
         return JsonResponse({'message': 'CONNECTION_ERROR'}, status=400)
 
+@login_required
+def after_kakao(request):
+    the_unibber = Unibber.objects.get(user = request.user)
+    univ_img = request.FILES["univImg"]
+    nickname = request.body["nickname"]
+    phone_num = request.body["phone_num"]
+    student_type = request.body["student_type"]
+
+
+
+
+def login(request):
+    email = request.body["email"]
+    password = request.body["password"]
+    user = User.objects.get(email=email, password=password)
+    token = Token.objects.get(user=user)
+    if user:
+        login(request,user)
+        return JsonResponse({"result" : True,"authToken" : token.key,"msg" : f"{user.__str__()} logged in"})
+    else:
+        return JsonResponse({"result" : False,"msg" : "login failed"})
+
 def signup(request):
     email = request.body["email"]
     if User.objects.get(email = email).exits():
@@ -76,6 +98,8 @@ def signup(request):
     else:
         return JsonResponse({"msg" : "password not same"})
 
+# validation APIs
+
 def check_already_signup(request):
     email = request.body["email"]
     if User.objects.get(email = email).exits():
@@ -102,14 +126,3 @@ def check_dup_nick(request):
         return JsonResponse({"dupNick" : True })
     else:
         return JsonResponse({"dupNick" : False })
-
-def login(request):
-    email = request.body["email"]
-    password = request.body["password"]
-    user = User.objects.get(email=email, password=password)
-    token = Token.objects.get(user=user)
-    if user:
-        login(request,user)
-        return JsonResponse({"result" : True,"authToken" : token.key,"msg" : f"{user.__str__()} logged in"})
-    else:
-        return JsonResponse({"result" : False,"msg" : "login failed"})

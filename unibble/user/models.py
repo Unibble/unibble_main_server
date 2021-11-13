@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
+from bubble.models import Bubble
 
 class UserManager(BaseUserManager):
     """Define a model manager for User model with no username field."""
@@ -67,6 +68,9 @@ class Unibber(models.Model):
     phone_num = models.TextField(max_length=11)
     student_type = models.CharField(max_length=4, default="stdn", choices=STUDENT_TYPE)
     sns_link = models.TextField(max_length=20,default="연동 없음")
+    bubble_participate = models.ManyToManyField(Bubble,blank=True,related_name="participate_bubble")
+    bubble_host = models.ManyToManyField(Bubble,blank=True,related_name="bubble_host")
+    bubble_zzim = models.ManyToManyField(Bubble,blank=True,related_name="bubble_zzim")
     
     def __str__(self) -> str:
         str_name = ''
@@ -76,6 +80,6 @@ class Unibber(models.Model):
             str_name = self.user.email
         return str_name
 class University(models.Model):
-    name = models.TextField(max_length=50)
     unibber = models.OneToOneField(Unibber, on_delete = models.CASCADE,null=True)
+    name = models.TextField(max_length=50)
     campus = models.TextField(max_length=30, null=True)
