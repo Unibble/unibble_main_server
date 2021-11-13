@@ -3,7 +3,31 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.utils.translation import ugettext_lazy as _
 from django.utils import timezone
 from bubble.models import Bubble
+from uuid import uuid4
+import os
 
+def profile_upload_to(instance,filename):
+    user_path = "unibber/profile/"
+    # 길이 32 인 uuid 값
+    uuid_name = uuid4().hex
+    # 확장자 추출
+    extension = os.path.splitext(filename)[-1].lower()
+    # 결합 후 return
+    return '/'.join([
+        user_path,
+        uuid_name + extension,
+    ])
+def univ_upload_to(instance,filename):
+    user_path = "unibber/univ/"
+    # 길이 32 인 uuid 값
+    uuid_name = uuid4().hex
+    # 확장자 추출
+    extension = os.path.splitext(filename)[-1].lower()
+    # 결합 후 return
+    return '/'.join([
+        user_path,
+        uuid_name + extension,
+    ])
 class UserManager(BaseUserManager):
     """Define a model manager for User model with no username field."""
 
@@ -58,14 +82,16 @@ class Unibber(models.Model):
     STUDENT_TYPE = [
         ("newb", "신입생"),
         ("stdn", "재학생"),
+        ("left", "휴학생"),
         ("grad", "졸업생"),
     ]
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now=timezone.now)
-    profile_img = models.ImageField()
+    profile_img = models.ImageField(upload_to=profile_upload_to, blank=True)
+    university_img = models.ImageField(upload_to=univ_upload_to, blank=True)
     major = models.CharField(max_length=3, default="de", choices=MAJOR)
-    nick_name = models.TextField(max_length=10)
-    phone_num = models.TextField(max_length=11)
+    nick_name = models.CharField(max_length=10)
+    phone_num = models.CharField(max_length=11)
     student_type = models.CharField(max_length=4, default="stdn", choices=STUDENT_TYPE)
     sns_link = models.TextField(max_length=20,default="연동 없음")
     bubble_participate = models.ManyToManyField(Bubble,blank=True,related_name="participate_bubble")
@@ -79,6 +105,7 @@ class Unibber(models.Model):
         else:
             str_name = self.user.email
         return str_name
+    
 class University(models.Model):
     unibber = models.OneToOneField(Unibber, on_delete = models.CASCADE,null=True)
     name = models.TextField(max_length=50)

@@ -52,6 +52,7 @@ def after_kakao(request):
     nickname = request.body["nickname"]
     phone_num = request.body["phone_num"]
     student_type = request.body["student_type"]
+    the_unibber.univ
 
 
 

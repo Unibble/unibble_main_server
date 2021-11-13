@@ -33,16 +33,15 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-    # all-auth
+    # external
+    'rest_framework',
+    "rest_framework.authtoken",
+    'storages',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    # provider
     'allauth.socialaccount.providers.kakao',
 
-    # DRF
-    'rest_framework',
-    "rest_framework.authtoken",
 
     # local apps
     "authentication",
@@ -152,3 +151,17 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+###S3 Storages
+AWS_S3_SECURE_URLS = False       # use http instead of https
+AWS_QUERYSTRING_AUTH = False     # don't add complex authentication-related query parameters for requests
+AWS_REGION = "ap-northeast-2"
+AWS_STORAGE_BUCKET_NAME = 'unibble' # 설정한 버킷 이름
+AWS_S3_CUSTOM_DOMAIN = '%s.s3.%s.amazonaws.com' % (AWS_STORAGE_BUCKET_NAME,AWS_REGION)
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
