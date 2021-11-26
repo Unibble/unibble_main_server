@@ -86,7 +86,7 @@ def get_unibber_info(request):
     ]
 )
 def get_my_profile(request):
-    unibber = Unibber.objects.get(user = request.user)
+    unibber = Unibber.objects.get(user = request.user)  
     info = {}
     info["email"] = unibber.user.email
     info["nickname"] = unibber.nick_name
