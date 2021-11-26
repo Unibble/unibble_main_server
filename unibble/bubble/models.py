@@ -1,7 +1,5 @@
-from datetime import datetime
 from django.db import models
 from django.utils import timezone
-from user.models import Unibber
 
 class Bubble(models.Model):
     BUBBLE_TYPE = [
@@ -24,22 +22,20 @@ class Bubble(models.Model):
     created = models.DateTimeField(auto_now=timezone.now)
     time2meet = models.DateTimeField()
     deadline = models.DateTimeField()
-    host = models.ForeignKey(Unibber, on_delete=models.CASCADE)
-    guest = models.ForeignKey(Unibber, on_delete=models.CASCADE)
-    guest_num = models.PositiveSmallIntegerField(default=0)
+    host = models.ForeignKey("user.Unibber", on_delete=models.CASCADE)
     guest_max = models.PositiveSmallIntegerField(default=0)
-    zzim = models.ForeignKey(Unibber, on_delete=models.CASCADE)
     title = models.TextField(max_length=50)
     content = models.TextField(max_length=500,null=True, blank=True)
     unit = models.PositiveSmallIntegerField(blank=True, choices=UNIT)
     lat = models.FloatField(null=True, blank=True)
     lon = models.FloatField(null=True, blank=True)
-    location = models.CharField(blank=True)
+    location = models.CharField(max_length=100,blank=True)
+    address = models.TextField(max_length=200,null=True, blank=True)
     is_deleted = models.BooleanField(default=False)
 
 
 class Comment(models.Model):
     created = models.DateTimeField(auto_now=timezone.now)
-    writer = models.ForeignKey(Unibber, on_delete=models.CASCADE)
+    writer = models.ForeignKey("user.Unibber", on_delete=models.CASCADE)
     bubble = models.ForeignKey(Bubble, on_delete=models.CASCADE)
     content = models.TextField(max_length=200)

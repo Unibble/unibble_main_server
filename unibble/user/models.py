@@ -93,15 +93,12 @@ class Unibber(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now=timezone.now)
     profile_img = models.ImageField(upload_to=profile_upload_to, blank=True)
-    university = models.ForeignKey(University, on_delete=models.SET_DEFAULT, default="유니블대학교",null=True)
+    university = models.ForeignKey(University, on_delete=models.SET_DEFAULT, default=1, null=True)
     major = models.CharField(max_length=3, default="de", choices=MAJOR)
     nick_name = models.CharField(max_length=10)
     phone_num = models.CharField(max_length=11)
     student_type = models.CharField(max_length=4, default="stdn", choices=STUDENT_TYPE)
     sns_link = models.TextField(max_length=20,default="연동 없음")
-    bubble_participate = models.ManyToManyField(Bubble,blank=True,related_name="participate_bubble")
-    bubble_host = models.ManyToManyField(Bubble,blank=True,related_name="bubble_host")
-    bubble_zzim = models.ManyToManyField(Bubble,blank=True,related_name="bubble_zzim")
     
     def __str__(self) -> str:
         str_name = ''
@@ -111,4 +108,14 @@ class Unibber(models.Model):
             str_name = self.user.email
         return str_name
     
+class Guest(models.Model):
+    unibber = models.ForeignKey(Unibber, on_delete=models.CASCADE)
+    bubble = models.ForeignKey(Bubble, on_delete=models.CASCADE)
+    def __str__(self) -> str:
+        return f"Bubble(id:{self.bubble.id}) - Unibber(id: {self.unibber.id})"
 
+class Zzim(models.Model):
+    unibber = models.ForeignKey(Unibber, on_delete=models.CASCADE)
+    bubble = models.ForeignKey(Bubble, on_delete=models.CASCADE)
+    def __str__(self) -> str:
+        return f"Bubble(id:{self.bubble.id}) - Unibber(id: {self.unibber.id})"

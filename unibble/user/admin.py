@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.utils.translation import ugettext_lazy as _
-from .models import Unibber, University,User
+from .models import Unibber, University,User, Guest, Zzim
 
 # Register your models here.
 
@@ -31,4 +31,12 @@ class UnibberAdmin(admin.ModelAdmin):
 
 @admin.register(University)
 class UniversityAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(Guest)
+class GuestAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(Zzim)
+class ZzimAdmin(admin.ModelAdmin):
     pass

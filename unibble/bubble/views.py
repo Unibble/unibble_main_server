@@ -1,11 +1,10 @@
 from django.shortcuts import get_object_or_404
 from django.http.response import JsonResponse
 from django.contrib.auth.decorators import login_required
-from rest_framework import status
 from rest_framework.decorators import api_view
-from unibble import bubble
-from unibble.user.models import University
-from .models import Bubble, Unibber
+from user.models import Unibber,University, Zzim, Guest 
+from .models import Bubble, Comment
+from datetime import datetime, timedelta
 
 @api_view(
     [
@@ -14,15 +13,14 @@ from .models import Bubble, Unibber
 )
 def get_feed_bubble(request):
     units = request.GET.getlist("unit")
-    bubbles = Bubble.objects.filter(is_deleted = False).all()
-    if len(bubbles) == 0:
-        return JsonResponse({"msg" : "There is no bubble"}, status=404)
+    bubbles = Bubble.objects.filter(is_deleted = False)
     for code in units:
         bubbles = bubbles.filter(unit=code)
     list_response = []
     for bubble in bubbles:
-        host = Unibber.objects.get(id = bubble.host)
-        university = University.objects.get(id = host.university)
+        host = get_object_or_404(Unibber,id = bubble.host)
+        university = get_object_or_404(University, id = host.university)
+        guest = Guest.objects.filter(bubble = bubble).all()
         host_dict = {
             "id" : host.id,
             "profileImg" : host.profile_img,
@@ -33,7 +31,7 @@ def get_feed_bubble(request):
 
         # 참여하기 활성화 비활성화 여부 트리거
         is_full = False
-        if bubble.guest_num == bubble.guest_max:
+        if len(guest) == bubble.guest_max:
             is_full = True
 
         bubble_dict = {
@@ -41,37 +39,40 @@ def get_feed_bubble(request):
             "unit" : bubble.unit,
             "title" : bubble.title,
             "deadline" : bubble.deadline,
-            "guestNum" : bubble.guest_num,
+            "guestNum" : len(guest),
             "guestMax" : bubble.guest_max,
             "isFull" : is_full,
         }
         list_response.append(bubble_dict)
     return JsonResponse(list_response, safe=False, status=200)
 
-@login_required
 @api_view(
     [
         "POST"
     ]
 )
 def create_bubble(request):
-    title = request.body["title"]
-    time2meet = request.body["time2meet"]
-    location = request.body["location"]
-    lat = request.body["lat"]
-    lon = request.body["lon"]
-    guest_num = request.body["guest_num"]
+    title = request.data["title"]
+    time2meet = request.data["time2meet"]
+    deadline = datetime.strptime(time2meet, "%Y-%m-%d %H:%M:%S") + timedelta(days=1)
+    location = request.data["location"]
+    address = request.data["address"]
+    lat = request.data["lat"]
+    lon = request.data["lon"]
+    guest_max = request.data["guest_max"]
     host = Unibber.objects.get(user = request.user)
-    unit = request.body["unit"]
-    content = request.body["content"]
+    unit = request.data["unit[]"]
+    content = request.data["content"]
     new_bubble = Bubble(
         host = host,
         title = title,
         time2meet = time2meet,
+        deadline = deadline,
+        address = address,
         location = location,
         lat = lat,
         lon = lon,
-        guest_num = guest_num,
+        guest_max = guest_max,
         unit = unit,
         content = content,
     )
@@ -85,13 +86,36 @@ def create_bubble(request):
 )
 def get_bubble_detail(request, bubble_id):
     the_bubble = get_object_or_404(Bubble, id = bubble_id)
+
+    # host 정보
+    host = the_bubble.host
+    university = host.university
+    host_dict = {
+            "id" : host.id,
+            "profileImg" : str(host.profile_img.url),
+            "univName" : university.name,
+            "univCampus" : university.campus,
+            "major" : host.major
+        }
+
+    # guest 정보
+    guest_list = []
+    guest_relation = Guest.objects.filter(bubble = the_bubble)
+    for relation in guest_relation:
+        guest_dict = {
+            "nickname" : relation.unibber.nickname,
+            "profileImg" : relation.unibber.profile_img,
+        }
+        guest_list.append(guest_dict)
+
     context = {
-        "host" : the_bubble.host,
+        "host" : host_dict,
         "title" : the_bubble.title,
         "time2meet" : the_bubble.time2meet,
-        "lat" : the_bubble.lat,
-        "lon" : the_bubble.lon,
-        "guestNum" : the_bubble.guest_num,
+        "location" : the_bubble.location,
+        "guest" : guest_list,
+        "guestNum" : len(guest_relation),
+        "guestMax" : the_bubble.guest_max,
         "unit" : the_bubble.unit,
         "content" : the_bubble.content, 
     }
@@ -105,21 +129,23 @@ def get_bubble_detail(request, bubble_id):
 def update_bubble(request,bubble_id):
     the_bubble = get_object_or_404(Bubble, id = bubble_id)
     host = Unibber.objects.get(user = request.user)
-    title = request.body["title"]
-    time2meet = request.body["time2meet"]
-    location = request.body["location"]
-    lat = request.body["lat"]
-    lon = request.body["lon"]
-    guest_num = request.body["guest_num"]
-    unit = request.body["unit"]
-    content = request.body["content"]
+    title = request.data["title"]
+    time2meet = request.data["time2meet"]
+    location = request.data["location"]
+    address = request.data["address"]
+    lat = request.data["lat"]
+    lon = request.data["lon"]
+    guest_max = request.data["guest_max"]
+    unit = request.data["unit[]"]
+    content = request.data["content"]
     the_bubble.host = host
     the_bubble.title = title
     the_bubble.time2meet = time2meet
     the_bubble.location = location
+    the_bubble.address = address,
     the_bubble.lat = lat
     the_bubble.lon = lon
-    the_bubble.guest_num = guest_num
+    the_bubble.guest_max = guest_max
     the_bubble.unit = unit
     the_bubble.content = content
     the_bubble.save()
@@ -142,11 +168,10 @@ def delete_bubble(request,bubble_id):
     ]
 )
 def participate_bubble(request, bubble_id):
-    # 참여시 bubble객체의 게스트 수 +1
     the_unibber = get_object_or_404(Unibber, user = request.user)
     the_bubble = get_object_or_404(Bubble, id = bubble_id)
-    the_bubble.guest = the_unibber
-    the_bubble.save()
+    new_guest = Guest(unibber = the_unibber, bubble = the_bubble)
+    new_guest.save()
     context = {
         "result" : True,
         "msg" : f"{the_unibber.__str__()} successfully participated Bubble({the_bubble.id})"
@@ -161,10 +186,57 @@ def participate_bubble(request, bubble_id):
 def zzim_bubble(request, bubble_id):
     the_unibber = get_object_or_404(Unibber, user = request.user)
     the_bubble = get_object_or_404(Bubble, id = bubble_id)
-    the_bubble.zzim = the_unibber
-    the_bubble.save()
+    new_zzim = Zzim(unibber = the_unibber, bubble = the_bubble)
+    new_zzim.save()
     context = {
         "result" : True,
-        "msg" : f"{the_unibber.__str__()} successfully zzim Bubble({the_bubble.id})"
+        "msg" : f"Bubbler({the_unibber.id}) successfully zzim Bubble({the_bubble.id})"
     }
     return JsonResponse(context, status=200)
+
+@api_view(
+    [
+        "POST"
+    ]
+)
+def create_comment(request, bubble_id):
+    the_bubble = get_object_or_404(Bubble, id = bubble_id)
+    writer = get_object_or_404(Unibber, user = request.user)
+    content = request.data["content"]
+    new_comment = Comment(writer = writer, bubble = the_bubble, content=content)
+    new_comment.save()
+    return JsonResponse({"msg" : f"Comment successfully written"}, status=200)
+
+@api_view(
+    [
+        "GET"
+    ]
+)
+def get_comment(request, bubble_id):
+    the_bubble = get_object_or_404(Bubble, id = bubble_id)
+    comments = Comment.objects.filter(bubble = the_bubble)
+    list_response = []
+    for comment in comments:
+        is_participate = Guest.objects.filter(bubble = the_bubble, unibber = comment.writer).exists()
+        comment_dict = {
+            "profileImg" : comment.writer.profile_img.url,
+            "nickName" : comment.writer.nickname,
+            "university" : comment.writer.university.name,
+            "campus" : comment.writer.university.campus,
+            "major" : comment.writer.major,
+            "is_participate" : is_participate,
+            "created" : comment.created,
+            "content" : comment.content
+        }
+        list_response.append(comment_dict)
+    return JsonResponse(list_response, safe=False, status=200)
+
+@api_view(
+    [
+        "DELETE"
+    ]
+)
+def delete_comment(request, comment_id):
+    the_comment = get_object_or_404(Comment, id = comment_id)
+    the_comment.delete()
+    return JsonResponse({"msg" : f"Comment successfully deleted"}, status=200)

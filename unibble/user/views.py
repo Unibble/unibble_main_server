@@ -1,8 +1,11 @@
-from django.http.response import JsonResponse
-from rest_framework.decorators import api_view
-from .models import Unibber
-from user.models import University
 from django.contrib.auth.decorators import login_required
+from django.http.response import JsonResponse
+from django.shortcuts import get_object_or_404
+from rest_framework.decorators import api_view
+
+from bubble.models import Bubble
+from .models import Guest, Unibber, Zzim
+from user.models import University
 
 @login_required
 @api_view(
@@ -23,46 +26,6 @@ def get_unibber(request):
         "university" : univ.name,
         "campus" : campus,
         "major" : the_unibber.major,
-    }
-    return JsonResponse(context, status=200)
-
-@login_required
-@api_view(
-    [
-        "GET"
-    ]
-)
-def profile(request):
-    the_unibber = Unibber.objects.get(user = request.user)
-    univ = University.objects.get(unibber = the_unibber)
-    if univ.campus:
-        campus = univ.campus
-    else:
-        campus = ""
-    bubble_participating = the_unibber.bubble_participate.all()
-    bubble_host = the_unibber.bubble_host.all()
-    bubble_zzim = the_unibber.bubble_zzim.all()
-
-    bubble_participating_list = []
-    bubble_host_list = []
-    bubble_zzim_list = []
-
-    for bubble in bubble_participating:
-        bubble_participating_list.append(bubble.id)
-    for bubble in bubble_host:
-        bubble_host_list.append(bubble.id)
-    for bubble in bubble_zzim:
-        bubble_zzim_list.append(bubble.id)
-
-    context = {
-        "nickname" : the_unibber.nick_name,
-        "profileImg" : the_unibber.profile_img,
-        "university" : univ.name,
-        "campus" : campus,
-        "major" : the_unibber.major,
-        "bubbleParticipate" : bubble_participating_list,
-        "bubbleHost" : bubble_host_list,
-        "bubbleZzim" : bubble_zzim_list,
     }
     return JsonResponse(context, status=200)
 
@@ -96,3 +59,122 @@ def get_my_profile(request):
     info["studentType"] = unibber.student_type
     info["snsLink"] = unibber.sns_link
     return JsonResponse(info, status=200)
+
+@api_view(
+    [
+        "GET",
+    ]
+)
+def get_host_bubble(request):
+    list_response = []
+    the_unibber = get_object_or_404(Unibber, user = request.user)
+    host_bubbles = Bubble.objects.filter(host = the_unibber)
+    for bubble in host_bubbles:
+        host = the_unibber
+        university = University.objects.get(id = host.university)
+        host_dict = {
+            "id" : host.id,
+            "profileImg" : host.profile_img,
+            "univName" : university.name,
+            "univCampus" : university.campus,
+            "major" : host.major
+        }
+
+        # 참여하기 활성화 비활성화 여부 트리거
+        is_full = False
+        if bubble.guest_num == bubble.guest_max:
+            is_full = True
+
+        bubble_dict = {
+            "host" : host_dict,
+            "unit" : bubble.unit,
+            "title" : bubble.title,
+            "deadline" : bubble.deadline,
+            "guestNum" : bubble.guest_num,
+            "guestMax" : bubble.guest_max,
+            "isFull" : is_full,
+        }
+        list_response.append(bubble_dict)
+        return JsonResponse(list_response, safe=False, status=200)
+
+@api_view(
+    [
+        "GET",
+    ]
+)
+def get_participate_bubble(request):
+    list_response = []
+    the_unibber = get_object_or_404(Unibber, user = request.user)
+    guest_relations = Guest.objects.filter(unibber = the_unibber)
+    participate_bubble = []
+    for relation in guest_relations:
+        participate_bubble.append(relation.bubble)
+
+
+    for bubble in participate_bubble:
+        host = bubble.host
+        university = University.objects.get(id = host.university)
+        host_dict = {
+            "id" : host.id,
+            "profileImg" : host.profile_img,
+            "univName" : university.name,
+            "univCampus" : university.campus,
+            "major" : host.major
+        }
+
+        # 참여하기 활성화 비활성화 여부 트리거
+        is_full = False
+        if bubble.guest_num == bubble.guest_max:
+            is_full = True
+
+        bubble_dict = {
+            "host" : host_dict,
+            "unit" : bubble.unit,
+            "title" : bubble.title,
+            "deadline" : bubble.deadline,
+            "guestNum" : bubble.guest_num,
+            "guestMax" : bubble.guest_max,
+            "isFull" : is_full,
+        }
+        list_response.append(bubble_dict)
+        return JsonResponse(list_response, safe=False, status=200)
+
+@api_view(
+    [
+        "GET",
+    ]
+)
+def get_zzim_bubble(request):
+    list_response = []
+    the_unibber = get_object_or_404(Unibber, user = request.user)
+    zzim_relations = Zzim.objects.filter(unibber = the_unibber)
+    zzim_bubble = []
+    for relation in zzim_relations:
+        zzim_bubble.append(relation.bubble)
+
+    for bubble in zzim_bubble:
+        host = bubble.host
+        university = University.objects.get(id = host.university)
+        host_dict = {
+            "id" : host.id,
+            "profileImg" : host.profile_img,
+            "univName" : university.name,
+            "univCampus" : university.campus,
+            "major" : host.major
+        }
+        # 참여하기 활성화 비활성화 여부 트리거
+        is_full = False
+        if bubble.guest_num == bubble.guest_max:
+            is_full = True
+
+        bubble_dict = {
+            "host" : host_dict,
+            "unit" : bubble.unit,
+            "title" : bubble.title,
+            "deadline" : bubble.deadline,
+            "guestNum" : bubble.guest_num,
+            "guestMax" : bubble.guest_max,
+            "isFull" : is_full,
+        }
+        list_response.append(bubble_dict)
+        return JsonResponse(list_response, safe=False, status=200)
