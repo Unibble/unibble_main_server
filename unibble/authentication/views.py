@@ -64,19 +64,19 @@ def login(request):
     token = Token.objects.get(user=user)
     if user:
         login(request,user)
-        return JsonResponse({"result" : True,"authToken" : token.key,"msg" : f"{user.__str__()} logged in"})
+        return JsonResponse({"result" : True,"authToken" : token.key,"msg" : f"{user.__str__()} logged in"}, status=200)
     else:
-        return JsonResponse({"result" : False,"msg" : "login failed"})
+        return JsonResponse({"result" : False,"msg" : "login failed"}, status=401)
 
 def signup(request):
     email = request.body["email"]
     if User.objects.get(email = email).exits():
-        return JsonResponse({"msg" : "already has account"})
+        return JsonResponse({"msg" : "already has account"}, status=300)
     pw1 = request.body["pw1"]
     pw2 = request.body["pw2"]
     nick_name = request.body["nick_name"]
     if Unibber.objects.get(nick_name = nick_name).exists():
-        return JsonResponse({"msg" : "duplicate nickname"})
+        return JsonResponse({"msg" : "duplicate nickname"}, status=300)
     phone_num = request.body["phone_num"]
     student_type = request.body["student_type"]
     if pw1 == pw2:
@@ -95,18 +95,18 @@ def signup(request):
         unibber.save()
         # login after signup
         login(request,user)
-        return JsonResponse({"authToken" : token.key,"msg" : "unibber successfuly created"})
+        return JsonResponse({"authToken" : token.key,"msg" : "unibber successfuly created"}, status=200)
     else:
-        return JsonResponse({"msg" : "password not same"})
+        return JsonResponse({"msg" : "password not same"}, status=300)
 
 # validation APIs
 
 def check_already_signup(request):
     email = request.body["email"]
     if User.objects.get(email = email).exits():
-        return JsonResponse({"hasAccount" : True })
+        return JsonResponse({"alreadySignup" : True }, status=300)
     else:
-        return JsonResponse({"hasAccount" : False })
+        return JsonResponse({"alreadySignup" : False }, status=200)
 
 def password_validation(request):
     password = request.body["password"]
@@ -117,13 +117,13 @@ def password_validation(request):
         CommonPasswordValidator.validate(password=password)
         NumericPasswordValidator.validate(password=password)
     except:
-        return JsonResponse({"pwCheck" : False})
-    return JsonResponse({"pwCheck" : True})
+        return JsonResponse({"pwCheck" : False}, status=300)
+    return JsonResponse({"pwCheck" : True}, status=200)
 
 
 def check_dup_nick(request):
     nick_name = request.body["nick_name"]
     if Unibber.objects.get(nick_name = nick_name).exits():
-        return JsonResponse({"dupNick" : True })
+        return JsonResponse({"dupNick" : True }, status=300)
     else:
-        return JsonResponse({"dupNick" : False })
+        return JsonResponse({"dupNick" : False }, status=200)

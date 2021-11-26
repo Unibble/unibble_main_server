@@ -67,6 +67,11 @@ class User(AbstractUser):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
     objects = UserManager()
+
+class University(models.Model):
+    name = models.TextField(max_length=50)
+    campus = models.TextField(max_length=30, null=True)
+
 class Unibber(models.Model):
     MAJOR = [
         ("de","Default"),
@@ -88,7 +93,7 @@ class Unibber(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now=timezone.now)
     profile_img = models.ImageField(upload_to=profile_upload_to, blank=True)
-    university_img = models.ImageField(upload_to=univ_upload_to, blank=True)
+    university = models.ForeignKey(University, on_delete=models.SET_DEFAULT, default="유니블대학교",null=True)
     major = models.CharField(max_length=3, default="de", choices=MAJOR)
     nick_name = models.CharField(max_length=10)
     phone_num = models.CharField(max_length=11)
@@ -106,7 +111,4 @@ class Unibber(models.Model):
             str_name = self.user.email
         return str_name
     
-class University(models.Model):
-    unibber = models.OneToOneField(Unibber, on_delete = models.CASCADE,null=True)
-    name = models.TextField(max_length=50)
-    campus = models.TextField(max_length=30, null=True)
+

@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.db import models
 from django.utils import timezone
 from user.models import Unibber
@@ -16,7 +17,8 @@ class Bubble(models.Model):
         (4,"영화"),
         (5,"운동"),
         (6,"산책"),
-        (7,"기타"),
+        (7,"게임"),
+        (8,"기타"),
     ]
     type = models.CharField(max_length=10, default="live", choices=BUBBLE_TYPE)
     created = models.DateTimeField(auto_now=timezone.now)
@@ -25,13 +27,16 @@ class Bubble(models.Model):
     host = models.ForeignKey(Unibber, on_delete=models.CASCADE)
     guest = models.ForeignKey(Unibber, on_delete=models.CASCADE)
     guest_num = models.PositiveSmallIntegerField(default=0)
+    guest_max = models.PositiveSmallIntegerField(default=0)
     zzim = models.ForeignKey(Unibber, on_delete=models.CASCADE)
     title = models.TextField(max_length=50)
     content = models.TextField(max_length=500,null=True, blank=True)
     unit = models.PositiveSmallIntegerField(blank=True, choices=UNIT)
     lat = models.FloatField(null=True, blank=True)
     lon = models.FloatField(null=True, blank=True)
+    location = models.CharField(blank=True)
     is_deleted = models.BooleanField(default=False)
+
 
 class Comment(models.Model):
     created = models.DateTimeField(auto_now=timezone.now)

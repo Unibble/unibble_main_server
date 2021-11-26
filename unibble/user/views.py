@@ -24,7 +24,7 @@ def get_unibber(request):
         "campus" : campus,
         "major" : the_unibber.major,
     }
-    return JsonResponse(context)
+    return JsonResponse(context, status=200)
 
 @login_required
 @api_view(
@@ -64,7 +64,7 @@ def profile(request):
         "bubbleHost" : bubble_host_list,
         "bubbleZzim" : bubble_zzim_list,
     }
-    return JsonResponse(context)
+    return JsonResponse(context, status=200)
 
 S3_URL = "http://unibble.s3.ap-northeast-2.amazonaws.com/"
 
@@ -78,7 +78,7 @@ def get_unibber_info(request):
     info = {}
     info["nickname"] = unibber.nick_name
     info["profileImg"] = S3_URL+str(unibber.profile_img)
-    return JsonResponse(info)
+    return JsonResponse(info, status=200)
 
 @api_view(
     [
@@ -95,4 +95,4 @@ def get_my_profile(request):
     info["phoneNum"] = unibber.phone_num
     info["studentType"] = unibber.student_type
     info["snsLink"] = unibber.sns_link
-    return JsonResponse(info)
+    return JsonResponse(info, status=200)
