@@ -94,7 +94,7 @@ class Unibber(models.Model):
     created = models.DateTimeField(auto_now=timezone.now)
     profile_img = models.ImageField(upload_to=profile_upload_to, blank=True)
     university = models.ForeignKey(University, on_delete=models.SET_DEFAULT, default=1, null=True)
-    major = models.CharField(max_length=3, default="de", choices=MAJOR)
+    major = models.CharField(max_length=3, default="", choices=MAJOR)
     nick_name = models.CharField(max_length=10)
     phone_num = models.CharField(max_length=11)
     student_type = models.CharField(max_length=4, default="stdn", choices=STUDENT_TYPE)

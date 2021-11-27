@@ -45,14 +45,14 @@ def kakao_login(request):
     except ConnectionError:
         return JsonResponse({'message': 'CONNECTION_ERROR'}, status=400)
 
-@login_required
-def after_kakao(request):
-    the_unibber = Unibber.objects.get(user = request.user)
-    univ_img = request.FILES["univImg"]
-    nickname = request.body["nickname"]
-    phone_num = request.body["phone_num"]
-    student_type = request.body["student_type"]
-    the_unibber.univ
+# @login_required
+# def after_kakao(request):
+#     the_unibber = Unibber.objects.get(user = request.user)
+#     univ_img = request.FILES["univImg"]
+#     nickname = request.body["nickname"]
+#     phone_num = request.body["phone_num"]
+#     student_type = request.body["student_type"]
+#     the_unibber.univ
 
 
 

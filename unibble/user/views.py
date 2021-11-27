@@ -7,7 +7,6 @@ from bubble.models import Bubble
 from .models import Guest, Unibber, Zzim
 from user.models import University
 
-@login_required
 @api_view(
     [
         "GET"
@@ -16,31 +15,30 @@ from user.models import University
 def get_unibber(request):
     the_unibber = Unibber.objects.get(user = request.user)
     univ = University.objects.get(unibber = the_unibber)
+    major = the_unibber.get_major_display()
     if univ.campus:
         campus = univ.campus
     else:
         campus = ""
     context = {
         "nickname" : the_unibber.nick_name,
-        "profileImg" : the_unibber.profile_img,
+        "profileImg" : the_unibber.profile_img.url,
         "university" : univ.name,
         "campus" : campus,
-        "major" : the_unibber.major,
+        "major" : major,
     }
     return JsonResponse(context, status=200)
 
-S3_URL = "http://unibble.s3.ap-northeast-2.amazonaws.com/"
-
 @api_view(
     [
-        "GET",
+        "POST",
     ]
 )
 def get_unibber_info(request):
     unibber = Unibber.objects.get(user = request.user)
     info = {}
     info["nickname"] = unibber.nick_name
-    info["profileImg"] = S3_URL+str(unibber.profile_img)
+    info["profileImg"] = unibber.profile_img.url
     return JsonResponse(info, status=200)
 
 @api_view(
@@ -50,13 +48,15 @@ def get_unibber_info(request):
 )
 def get_my_profile(request):
     unibber = Unibber.objects.get(user = request.user)  
+    major = unibber.get_major_display()
+    student_type = unibber.get_student_type_display()
     info = {}
     info["email"] = unibber.user.email
     info["nickname"] = unibber.nick_name
-    info["profileImg"] = S3_URL+str(unibber.profile_img)
-    info["major"] = unibber.major
+    info["profileImg"] = unibber.profile_img.url,
+    info["major"] = major,
     info["phoneNum"] = unibber.phone_num
-    info["studentType"] = unibber.student_type
+    info["studentType"] = student_type,
     info["snsLink"] = unibber.sns_link
     return JsonResponse(info, status=200)
 
@@ -71,26 +71,27 @@ def get_host_bubble(request):
     host_bubbles = Bubble.objects.filter(host = the_unibber)
     for bubble in host_bubbles:
         host = the_unibber
-        university = University.objects.get(id = host.university)
+        university = host.university
         host_dict = {
             "id" : host.id,
-            "profileImg" : host.profile_img,
+            "profileImg" : host.profile_img.url,
             "univName" : university.name,
             "univCampus" : university.campus,
-            "major" : host.major
+            "major" : host.get_major_display()
         }
 
         # 참여하기 활성화 비활성화 여부 트리거
         is_full = False
-        if bubble.guest_num == bubble.guest_max:
+        guest_relations = Guest.objects.filter(bubble = bubble)
+        if len(guest_relations) == bubble.guest_max:
             is_full = True
 
         bubble_dict = {
             "host" : host_dict,
-            "unit" : bubble.unit,
+            "unit" : bubble.get_unit_display(),
             "title" : bubble.title,
             "deadline" : bubble.deadline,
-            "guestNum" : bubble.guest_num,
+            "guestNum" : len(guest_relations),
             "guestMax" : bubble.guest_max,
             "isFull" : is_full,
         }
@@ -116,28 +117,29 @@ def get_participate_bubble(request):
         university = University.objects.get(id = host.university)
         host_dict = {
             "id" : host.id,
-            "profileImg" : host.profile_img,
+            "profileImg" : host.profile_img.url,
             "univName" : university.name,
             "univCampus" : university.campus,
-            "major" : host.major
+            "major" : host.get_major_display()
         }
 
         # 참여하기 활성화 비활성화 여부 트리거
         is_full = False
-        if bubble.guest_num == bubble.guest_max:
+        guest_relations = Guest.objects.filter(bubble = bubble)
+        if len(guest_relations) == bubble.guest_max:
             is_full = True
 
         bubble_dict = {
             "host" : host_dict,
-            "unit" : bubble.unit,
+            "unit" : bubble.get_unit_display(),
             "title" : bubble.title,
             "deadline" : bubble.deadline,
-            "guestNum" : bubble.guest_num,
+            "guestNum" : len(guest_relations),
             "guestMax" : bubble.guest_max,
             "isFull" : is_full,
         }
         list_response.append(bubble_dict)
-        return JsonResponse(list_response, safe=False, status=200)
+    return JsonResponse(list_response, safe=False, status=200)
 
 @api_view(
     [
@@ -154,25 +156,26 @@ def get_zzim_bubble(request):
 
     for bubble in zzim_bubble:
         host = bubble.host
-        university = University.objects.get(id = host.university)
+        university = host.university
         host_dict = {
             "id" : host.id,
-            "profileImg" : host.profile_img,
+            "profileImg" : host.profile_img.url,
             "univName" : university.name,
             "univCampus" : university.campus,
-            "major" : host.major
+            "major" : host.get_major_display()
         }
         # 참여하기 활성화 비활성화 여부 트리거
         is_full = False
-        if bubble.guest_num == bubble.guest_max:
+        guest = Guest.objects.filter(bubble = bubble) 
+        if len(guest) == bubble.guest_max:
             is_full = True
 
         bubble_dict = {
             "host" : host_dict,
-            "unit" : bubble.unit,
+            "unit" : bubble.get_unit_display(),
             "title" : bubble.title,
             "deadline" : bubble.deadline,
-            "guestNum" : bubble.guest_num,
+            "guestNum" : len(guest),
             "guestMax" : bubble.guest_max,
             "isFull" : is_full,
         }

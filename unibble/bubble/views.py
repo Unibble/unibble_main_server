@@ -18,15 +18,15 @@ def get_feed_bubble(request):
         bubbles = bubbles.filter(unit=code)
     list_response = []
     for bubble in bubbles:
-        host = get_object_or_404(Unibber,id = bubble.host)
-        university = get_object_or_404(University, id = host.university)
+        host = bubble.host
+        university = host.university
         guest = Guest.objects.filter(bubble = bubble).all()
         host_dict = {
             "id" : host.id,
-            "profileImg" : host.profile_img,
+            "profileImg" : host.profile_img.url,
             "univName" : university.name,
             "univCampus" : university.campus,
-            "major" : host.major
+            "major" : host.get_major_display()
         }
 
         # 참여하기 활성화 비활성화 여부 트리거
@@ -95,7 +95,7 @@ def get_bubble_detail(request, bubble_id):
             "profileImg" : str(host.profile_img.url),
             "univName" : university.name,
             "univCampus" : university.campus,
-            "major" : host.major
+            "major" : host.get_major_display()
         }
 
     # guest 정보
@@ -203,6 +203,8 @@ def create_comment(request, bubble_id):
     the_bubble = get_object_or_404(Bubble, id = bubble_id)
     writer = get_object_or_404(Unibber, user = request.user)
     content = request.data["content"]
+    if len(content) == 0:
+        return JsonResponse({"msg" : f"Empty content"}, status=404)    
     new_comment = Comment(writer = writer, bubble = the_bubble, content=content)
     new_comment.save()
     return JsonResponse({"msg" : f"Comment successfully written"}, status=200)
@@ -217,14 +219,16 @@ def get_comment(request, bubble_id):
     comments = Comment.objects.filter(bubble = the_bubble)
     list_response = []
     for comment in comments:
+        is_host = comment.writer == the_bubble.host
         is_participate = Guest.objects.filter(bubble = the_bubble, unibber = comment.writer).exists()
         comment_dict = {
             "profileImg" : comment.writer.profile_img.url,
-            "nickName" : comment.writer.nickname,
+            "nickName" : comment.writer.__str__(),
             "university" : comment.writer.university.name,
             "campus" : comment.writer.university.campus,
-            "major" : comment.writer.major,
+            "major" : comment.writer.get_major_display(),
             "is_participate" : is_participate,
+            "is_host" : is_host,
             "created" : comment.created,
             "content" : comment.content
         }
@@ -237,6 +241,10 @@ def get_comment(request, bubble_id):
     ]
 )
 def delete_comment(request, comment_id):
+    current_unibber = get_object_or_404(Unibber, user = request.user)
     the_comment = get_object_or_404(Comment, id = comment_id)
-    the_comment.delete()
-    return JsonResponse({"msg" : f"Comment successfully deleted"}, status=200)
+    if the_comment.writer == current_unibber:
+        the_comment.delete()
+        return JsonResponse({"msg" : f"Comment successfully deleted"}, status=200)
+    else:
+        return JsonResponse({"msg" : f"Only writer can delete his/her comment"}, status=400)
