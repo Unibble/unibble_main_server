@@ -1,8 +1,8 @@
 from django.shortcuts import get_object_or_404
 from django.http.response import JsonResponse
-from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 from rest_framework.decorators import api_view
-from user.models import Unibber,University, Zzim, Guest 
+from user.models import Unibber, Zzim, Guest 
 from .models import Bubble, Comment
 from datetime import datetime, timedelta
 
@@ -13,16 +13,18 @@ from datetime import datetime, timedelta
 )
 def get_feed_bubble(request):
     units = request.GET.getlist("unit")
-    bubbles = Bubble.objects.filter(is_deleted = False)
-    for code in units:
-        bubbles = bubbles.filter(unit=code)
+    total_bubbles = []
+    for unit in units:
+        bubbles = Bubble.objects.filter(Q(is_deleted = False)&Q(unit = int(unit))).all()
+        total_bubbles += bubbles
+    print(f"total_bubbles :{total_bubbles}")
     list_response = []
-    for bubble in bubbles:
+    for bubble in total_bubbles:
         host = bubble.host
         university = host.university
         guest = Guest.objects.filter(bubble = bubble).all()
         host_dict = {
-            "id" : host.id,
+            "nick_name" : host.nick_name,
             "profileImg" : host.profile_img.url,
             "univName" : university.name,
             "univCampus" : university.campus,
@@ -91,7 +93,7 @@ def get_bubble_detail(request, bubble_id):
     host = the_bubble.host
     university = host.university
     host_dict = {
-            "id" : host.id,
+            "nick_name" : host.nick_name,
             "profileImg" : str(host.profile_img.url),
             "univName" : university.name,
             "univCampus" : university.campus,

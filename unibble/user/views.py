@@ -73,7 +73,7 @@ def get_host_bubble(request):
         host = the_unibber
         university = host.university
         host_dict = {
-            "id" : host.id,
+            "nick_name" : host.nick_name,
             "profileImg" : host.profile_img.url,
             "univName" : university.name,
             "univCampus" : university.campus,
@@ -116,7 +116,7 @@ def get_participate_bubble(request):
         host = bubble.host
         university = University.objects.get(id = host.university)
         host_dict = {
-            "id" : host.id,
+            "nick_name" : host.nick_name,
             "profileImg" : host.profile_img.url,
             "univName" : university.name,
             "univCampus" : university.campus,
@@ -158,7 +158,7 @@ def get_zzim_bubble(request):
         host = bubble.host
         university = host.university
         host_dict = {
-            "id" : host.id,
+            "nick_name" : host.nick_name,
             "profileImg" : host.profile_img.url,
             "univName" : university.name,
             "univCampus" : university.campus,
